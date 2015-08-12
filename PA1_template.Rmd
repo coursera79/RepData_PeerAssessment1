@@ -8,6 +8,7 @@ output:
 We need to load a number of libraries which are used in this analysis:
 ```{r message=FALSE, warning=FALSE}
 library(dplyr)
+library(lattice)
 ```
 
 ## Loading and preprocessing the data
@@ -65,7 +66,7 @@ The total number of missing values in the dataset:
 nrow(activity) - sum(complete.cases(activity))
 ```
 
-We now create a new dataset in which we fill in missing number of steps for intervals by using the average number of steps of that interval in the original data set.
+We now create a new dataset in which we fill in missing number of steps for intervals by using the average number of steps of that interval for all days for which we do have measurements from the original data set.
 
 ```{r}
 activity.imp <- mutate(
@@ -114,34 +115,16 @@ activity.imp <- mutate(
 )
 ```
 
-Here follows a panel plot containing a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis). Note that I used the base plotting system instead of lattice which explains the different 'look' of the graph.
+Here follows a panel plot containing a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis).
 
 ```{r}
-par(mfcol=c(2,1))
-par(mar = c(4, 4, 1.5, 2))
-par(oma = c(0, 0, 0, 0))
+steps_per_interval.imp <- activity.imp %>%
+    group_by(interval, daytype) %>% summarise(mean = mean(steps, na.rm = TRUE))
 
-steps_per_interval_weekend.imp <- activity.imp[activity.imp$daytype == 'weekend',] %>%
-    group_by(interval) %>% summarise(mean = mean(steps, na.rm = TRUE))
-plot(
-    steps_per_interval_weekend.imp$interval, 
-    steps_per_interval_weekend.imp$mean, 
-    main = 'weekend', 
-    type = 'l', 
-    xlab = '', 
-    ylab = 'number of steps',
-    ylim = c(0,250)
-)
-
-steps_per_interval_weekday.imp <- activity.imp[activity.imp$daytype == 'weekday',] %>%
-    group_by(interval) %>% summarise(mean = mean(steps, na.rm = TRUE))
-plot(
-    steps_per_interval_weekday.imp$interval,
-    steps_per_interval_weekday.imp$mean, 
-    main = 'weekday',
-    type = 'l', 
-    xlab = 'interval', 
-    ylab = 'number of steps',
-    ylim = c(0,250)
+xyplot(
+    steps_per_interval.imp$mean ~ steps_per_interval.imp$interval | steps_per_interval.imp$daytype,        layout = c(1,2), 
+    type = 'l',
+    xlab = 'Interval',
+    ylab = 'Number of steps'
 )
 ```
